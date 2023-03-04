@@ -1,18 +1,8 @@
 import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import DashboardContent from './components/Dashboard';
 
-import GetAccountInfo from './components/GetAccountInfo'
-
-function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <GetAccountInfo></GetAccountInfo>
-      </header>
-    </div>
-  );
-}
+const App = () =>  {
+  return <DashboardContent />;
+};
 
 export default App;
