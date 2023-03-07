@@ -25,6 +25,8 @@ import NetworkGraph from './NetworkGraph';
 import NetworkStatus from './NetworkStatus';
 import Deposits from './Deposits';
 import Orders from './Orders';
+import FormDialog from './FormDialog';
+import { useRecentTransactions } from '../symbol/useRecentTransactions';
 
 function Copyright(props: any) {
   return (
@@ -134,10 +136,19 @@ const Drawer = styled(MuiDrawer, { shouldForwardProp: (prop) => prop !== 'open' 
 const mdTheme = createTheme();
 
 function DashboardContent() {
-  const [open, setOpen] = React.useState(true);
+  // トグルドロワーの開閉状態
+  const [open, setOpen] = React.useState(false);
   const toggleDrawer = () => {
     setOpen(!open);
   };
+
+  // ユーザ入力
+  const [inputProp, setInputProp] = React.useState("NBZPR42WLMMGN56YVRO7Y4PFRVTZP4OG4Q75GPA")
+  console.log(inputProp)
+
+  // 直近のトランザクションを取得するカスタムフック
+  const [transactions, setTransactions] = useRecentTransactions(inputProp)
+  console.log(transactions)
 
   return (
     <ThemeProvider theme={mdTheme}>
@@ -149,18 +160,6 @@ function DashboardContent() {
               pr: '24px', // keep right padding when drawer closed
             }}
           >
-            <IconButton
-              edge="start"
-              color="inherit"
-              aria-label="open drawer"
-              onClick={toggleDrawer}
-              sx={{
-                marginRight: '36px',
-                ...(open && { display: 'none' }),
-              }}
-            >
-              <MenuIcon />
-            </IconButton>
             <Typography
               component="h1"
               variant="h6"
@@ -181,26 +180,6 @@ function DashboardContent() {
           </Search>
           </Toolbar>
         </AppBar>
-        <Drawer variant="permanent" open={open}>
-          <Toolbar
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'flex-end',
-              px: [1],
-            }}
-          >
-            <IconButton onClick={toggleDrawer}>
-              <ChevronLeftIcon />
-            </IconButton>
-          </Toolbar>
-          <Divider />
-          <List component="nav">
-            {mainListItems}
-            <Divider sx={{ my: 1 }} />
-            {secondaryListItems}
-          </List>
-        </Drawer>
         <Box
           component="main"
           sx={{
@@ -216,23 +195,27 @@ function DashboardContent() {
           <Toolbar />
           <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
             <Grid container spacing={3}>
-              {/* Recent Orders */}
-              <Grid item xs={8}>
-                <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column', height: 600, }}>
-                  <NetworkGraph />
-                </Paper>
+              {/* 入力ダイアログ */}
+              <Grid item xs={12}>
+                <FormDialog setInputProp={setInputProp}/>
               </Grid>
               {/* Network Status */}
-              <Grid item xs={4}>
+              <Grid item xs={12}>
                 <Paper
                   sx={{
                     p: 2,
                     display: 'flex',
                     flexDirection: 'column',
-                    height: 600,
+                    height: 100,
                   }}
                 >
-                  <NetworkStatus />
+                  <NetworkStatus/>
+                </Paper>
+              </Grid>
+              {/* Network Graph */}
+              <Grid item xs={12}>
+                <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column', height: 600, }}>
+                  <NetworkGraph/>
                 </Paper>
               </Grid>
             </Grid>

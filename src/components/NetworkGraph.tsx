@@ -1,54 +1,40 @@
-import * as React from 'react';
+import React, { useEffect, useState, useRef } from "react";
 import ReactDOM from "react-dom";
-import Graph from "react-graph-vis";
+import CytoscapeComponent from 'react-cytoscapejs';
+import { ElementDefinition } from "cytoscape";
 import { useTheme } from '@mui/material/styles';
-import { LineChart, Line, XAxis, YAxis, Label, ResponsiveContainer } from 'recharts';
 import Title from './Title';
 
-// Generate Sales Data
-function createData(time: string, amount?: number) {
-  return { time, amount };
-}
+const NetworkGraph = () => {
 
-export default function NetworkGraph() {
   const theme = useTheme();
 
-  const graph = {
-    nodes: [
-      { id: 1, label: "Node 1", title: "node 1 tootip text" },
-      { id: 2, label: "Node 2", title: "node 2 tootip text" },
-      { id: 3, label: "Node 3", title: "node 3 tootip text" },
-      { id: 4, label: "Node 4", title: "node 4 tootip text" },
-      { id: 5, label: "Node 5", title: "node 5 tootip text" }
-    ],
-    edges: [
-      { from: 1, to: 2 },
-      { from: 1, to: 3 },
-      { from: 2, to: 4 },
-      { from: 2, to: 5 }
-    ]
-  };
+  const nodesLength = 10;
+  let elements: ElementDefinition[] = [];
+  for(let i=0; i < nodesLength; i++){
+    elements.push(
+      { data: { id: String(i), label: 'Node ' + i }}
+    )
+  }
 
-  const options = {
-    layout: {
-      hierarchical: true
-    },
-    edges: {
-      color: "#000000"
-    },
-    height: "400px"
-  };
-
-  const events = {
-    select: function(event) {
-      var { nodes, edges } = event;
+  for(let l=0; l < nodesLength; l++){
+    for(let r=0; r < nodesLength; r++){
+      elements.push(
+        { data: { source: l, target: r, label: 'Edge from ' + l + ' to ' + r } }
+      )
     }
-  };
+  }
+
+  const layout1 = { name: 'random' };
+  const layout2 = { name: 'grid' };
+  const layout3 = { name: 'circle' };
+  const layout4 = { name: 'concentric' };
+  const layout5 = { name: 'breadthfirst' };
+  const layout6 = { name: 'cose' };
 
   return (
-    <React.Fragment>
-      <Title>NetworkGraph</Title>
-      test
-    </React.Fragment>
+    <CytoscapeComponent elements={elements} layout={layout2} style={ { width: '600px', height: '600px' } } />
   );
 }
+
+export default NetworkGraph
