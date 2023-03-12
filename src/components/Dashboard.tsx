@@ -28,6 +28,10 @@ import Orders from './Orders';
 import FormDialog from './FormDialog';
 import { useRecentTransactions } from '../symbol/useRecentTransactions';
 
+import { ElementDefinition } from "cytoscape";
+
+import {SymbolManager} from '../symbol/SymbolManager'
+
 function Copyright(props: any) {
   return (
     <Typography variant="body2" color="text.secondary" align="center" {...props}>
@@ -136,6 +140,8 @@ const Drawer = styled(MuiDrawer, { shouldForwardProp: (prop) => prop !== 'open' 
 const mdTheme = createTheme();
 
 function DashboardContent() {
+
+  console.log('*** DashboardContent() ***')
   // トグルドロワーの開閉状態
   const [open, setOpen] = React.useState(false);
   const toggleDrawer = () => {
@@ -144,11 +150,24 @@ function DashboardContent() {
 
   // ユーザ入力
   const [inputProp, setInputProp] = React.useState("NBZPR42WLMMGN56YVRO7Y4PFRVTZP4OG4Q75GPA")
-  console.log(inputProp)
+  //console.log(inputProp)
 
-  // 直近のトランザクションを取得するカスタムフック
-  const [transactions, setTransactions] = useRecentTransactions(inputProp)
-  console.log(transactions)
+  // グラフ描画データ
+  const [graphElements, setGraphElements] = React.useState<ElementDefinition[]>([]);
+
+  // SymbolManagerクラス
+  let symbolManager = new SymbolManager();
+
+  React.useEffect(() => {
+    // useEffect自体ではasyncの関数を受け取れないので内部で関数を定義して呼び出す。
+    const getElements = async () =>{
+      const elements:ElementDefinition[] = await symbolManager.makeElementsByRecentTransactions(); 
+      console.log(elements);
+      setGraphElements(elements);
+    } 
+    getElements();
+  }, []);
+
 
   return (
     <ThemeProvider theme={mdTheme}>
@@ -215,7 +234,7 @@ function DashboardContent() {
               {/* Network Graph */}
               <Grid item xs={12}>
                 <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column', height: 600, }}>
-                  <NetworkGraph/>
+                  <NetworkGraph elements={graphElements} />
                 </Paper>
               </Grid>
             </Grid>

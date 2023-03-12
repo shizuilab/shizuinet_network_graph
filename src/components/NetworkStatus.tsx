@@ -15,7 +15,9 @@ const NetworkStatus = ()=> {
   return (
     <React.Fragment>
       <Title>Network ステータス</Title>
+      {/*
       <WebSocketManager></WebSocketManager>
+      */}
     </React.Fragment>
   );
 }

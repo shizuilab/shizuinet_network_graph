@@ -8,6 +8,9 @@ import DialogContentText from '@mui/material/DialogContentText';
 import DialogTitle from '@mui/material/DialogTitle';
 
 const FormDialog =({setInputProp}) => {
+  
+    console.log('*** FormDialog() ***');
+
     const [open, setOpen] = React.useState(false);
     const [formValue, setFormValue] = React.useState("")
 
