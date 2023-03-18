@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { styled, alpha, createTheme, ThemeProvider } from '@mui/material/styles';
+
 import CssBaseline from '@mui/material/CssBaseline';
 import MuiDrawer from '@mui/material/Drawer';
 import Box from '@mui/material/Box';
@@ -26,11 +27,13 @@ import NetworkStatus from './NetworkStatus';
 import Deposits from './Deposits';
 import Orders from './Orders';
 import FormDialog from './FormDialog';
+import Title from './Title';
 import { useRecentTransactions } from '../symbol/useRecentTransactions';
 
 import { ElementDefinition } from "cytoscape";
 
 import {SymbolManager} from '../symbol/SymbolManager'
+import useWindowSize from '../hooks/useWindowSize'
 
 function Copyright(props: any) {
   return (
@@ -143,6 +146,10 @@ function DashboardContent() {
 
   console.log('*** DashboardContent() ***')
 
+
+  // ウィンドウサイズ
+  const [width, height] = useWindowSize();
+
   // トグルドロワーの開閉状態
   const [open, setOpen] = React.useState(false);
   const toggleDrawer = () => {
@@ -163,10 +170,44 @@ function DashboardContent() {
   const [isProgress,setIsProgress] = React.useState(false);
   // グラフ描画データ
   const [graphElements, setGraphElements] = React.useState<ElementDefinition[]>([]);
+  // グラフ描画領域のサイズ
+  const [graphCanvasSize, setGraphCanvasSize] = React.useState( {width: 100, height: 100 })
+
+  // Symbol管理クラス
+  const [symbolManager, setSymbolManager] = React.useState<SymbolManager>( new SymbolManager() );
 
   // SymbolManagerクラス
-  let symbolManager = new SymbolManager();
-  symbolManager.getMosaicInfo();
+  React.useEffect(() => {
+    symbolManager.getMosaicInfo();
+  }, []);
+
+  // ウィンドウサイズ変化時の処理
+  // グラフ描画コンポーネントへの参照をuseRefで持つ
+  // ウィンドウサイズが変わったらグラフ描画キャンバスのサイズも調整
+  const elm = React.useRef<HTMLInputElement>(null);
+  React.useEffect(() => {
+    if( elm.current != null){
+      // 対象コンポーネントのエレメント情報取得
+      /* Example
+      {
+        "x": 24,
+        "y": 196,
+        "width": 1088.15625,
+        "height": 900,
+        "top": 196,
+        "right": 1112.15625,
+        "bottom": 1096,
+        "left": 24
+      }
+       */
+      const elm_data =  JSON.parse(JSON.stringify(elm.current.getBoundingClientRect()));
+      // 余白分調整
+      const padding_x = 16 * 2;
+      const padding_y = (56 + (16.5 * 2) + (16 * 1));
+      setGraphCanvasSize( { width:elm_data.width - padding_x, height:elm_data.height-padding_y })
+      console.log( graphCanvasSize );
+    }
+  }, [width, height]);
 
 
   React.useEffect(() => {
@@ -198,12 +239,15 @@ function DashboardContent() {
     <ThemeProvider theme={mdTheme}>
       <Box sx={{ display: 'flex' }}>
         <CssBaseline />
+
         <AppBar position="absolute" open={open}>
+          {/* 上部ツールバー */}
           <Toolbar
             sx={{
               pr: '24px', // keep right padding when drawer closed
             }}
           >
+            {/* タイトル文字列 */}
             <Typography
               component="h1"
               variant="h6"
@@ -213,17 +257,31 @@ function DashboardContent() {
             >
               Symbol Network Graph
             </Typography>
+
+            <Paper>
+            <FormDialog 
+                setGraphMode={setGraphMode}
+                setInputProp={setInputProp}
+                setAggregateOpt={setAggregateOpt}
+                setPageNumberOpt={setPageNumberOpt}
+                setPageSizeOpt={setPageSizeOpt}
+                setPageLimitOpt={setPageLimitOpt}/>
+            </Paper>
+
+            {/* 検索フォーム */}
             <Search>
-            <SearchIconWrapper>
-              <SearchIcon />
-            </SearchIconWrapper>
-            <StyledInputBase
-              placeholder="Address/MosaicId…"
-              inputProps={{ 'aria-label': 'search' }}
-            />
-          </Search>
+              <SearchIconWrapper>
+                <SearchIcon />
+              </SearchIconWrapper>
+              <StyledInputBase
+                placeholder="Address/MosaicId…"
+                inputProps={{ 'aria-label': 'search' }}
+              />
+            </Search>
+
           </Toolbar>
         </AppBar>
+        
         <Box
           component="main"
           sx={{
@@ -236,38 +294,34 @@ function DashboardContent() {
             overflow: 'auto',
           }}
         >
-          <Toolbar />
-          <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-            <Grid container spacing={3}>
-              {/* 入力ダイアログ */}
-              <Grid item xs={12}>
-                <FormDialog 
-                setGraphMode={setGraphMode}
-                setInputProp={setInputProp}
-                setAggregateOpt={setAggregateOpt}
-                setPageNumberOpt={setPageNumberOpt}
-                setPageSizeOpt={setPageSizeOpt}
-                setPageLimitOpt={setPageLimitOpt}/>
+
+          <Toolbar/>
+
+          <Container maxWidth="xl" sx={{ mt: 2, mb: 2 }}>
+
+            <Grid container spacing={2}>
+              {/* Network Graph */}
+              <Grid item xs={10}>
+                <Paper ref={elm} sx={{ p: 2, display: 'flex', flexDirection: 'column', height: 900, }}>
+                  <NetworkGraph elements={graphElements} isProgress={isProgress} canvasSize={graphCanvasSize} />
+                </Paper>
               </Grid>
+
               {/* Network Status */}
-              <Grid item xs={12}>
+              <Grid item xs={2}>
                 <Paper
                   sx={{
                     p: 2,
                     display: 'flex',
                     flexDirection: 'column',
-                    height: 100,
+                    height: 900,
                   }}
                 >
                   <NetworkStatus/>
                 </Paper>
               </Grid>
-              {/* Network Graph */}
-              <Grid item xs={12}>
-                <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column', height: 600, }}>
-                  <NetworkGraph elements={graphElements} isProgress={isProgress} />
-                </Paper>
-              </Grid>
+
+
             </Grid>
             <Copyright sx={{ pt: 4 }} />
           </Container>

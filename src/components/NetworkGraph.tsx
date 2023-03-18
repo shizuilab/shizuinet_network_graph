@@ -44,6 +44,16 @@ const NetworkGraph = (prop) => {
                     fit: true 
                   };
 
+  // グラフ描画領域のサイズ
+  const [canvasSize, setCanvasSize] = React.useState({width:100, height:100});
+
+  React.useEffect(() => {
+    setCanvasSize( prop['canvasSize']);
+    console.log(canvasSize)
+
+    console.log('~=======================================================')
+  }, [prop['canvasSize']]);
+
   /*
   const layout1 = { name: 'circle',
                     fit: true 
@@ -96,7 +106,7 @@ const NetworkGraph = (prop) => {
   if ( prop['isProgress'] == true ){
     console.log('読み込み中！！！！！！');
     return (
-      <Box sx={{ width: '100%' }}>
+      <Box sx={{ mx: 'auto', my: 'auto', width: '100%' }}>
         <LinearProgress />
       </Box>
     );
@@ -136,7 +146,7 @@ const NetworkGraph = (prop) => {
 
       <CytoscapeComponent
       elements={prop['elements']}
-      style={ {width: '900px', height: '600px'}}
+      style={ {width: canvasSize.width, height: canvasSize.height, background: 'red'}}
       cy={(cy) => {
         //cy.style( cyStylesheet );
         /*
