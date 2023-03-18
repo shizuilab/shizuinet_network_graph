@@ -3,7 +3,14 @@ import ReactDOM from "react-dom";
 import CytoscapeComponent from 'react-cytoscapejs';
 import { ElementDefinition } from "cytoscape";
 import { useTheme } from '@mui/material/styles';
-import Title from './Title';
+import InputLabel from '@mui/material/InputLabel';
+import Box from '@mui/material/Box';
+import MenuItem from '@mui/material/MenuItem';
+import FormControl from '@mui/material/FormControl';
+import Select, { SelectChangeEvent } from '@mui/material/Select';
+import Paper from '@mui/material/Paper';
+import Grid from '@mui/material/Grid';
+import LinearProgress from '@mui/material/LinearProgress';
 
 // テストデータ生成
 function testElement(){
@@ -26,19 +33,29 @@ function testElement(){
 }
 
 /* ネットワークグラフ描画コンポーネント */
-const NetworkGraph = (elements) => {
+const NetworkGraph = (prop) => {
   
   console.log('NetworkGraph')
-
   const theme = useTheme();
 
-  const layout1 = { name: 'random' };
+  // グラフ描画タイプ
+  const [graphLayoutType, setGraphLayoutType] = React.useState('random');
+  const layout1 = { name: graphLayoutType,
+                    fit: true 
+                  };
+
+  /*
+  const layout1 = { name: 'circle',
+                    fit: true 
+                  };
   const layout2 = { name: 'grid' };
   const layout3 = { name: 'circle' };
   const layout4 = { name: 'concentric' };
   const layout5 = { name: 'breadthfirst' };
   const layout6 = { name: 'cose' };
+  */
 
+  /*
   const cyStylesheet=[
     {
       selector: 'node',
@@ -61,23 +78,83 @@ const NetworkGraph = (elements) => {
       }
     }
   ]
+  */
+
+  // グラフ表示タイプ変更ハンドラ
+  const handleChange = (event: SelectChangeEvent) => {
+    setGraphLayoutType(event.target.value as string);
+  };
   
-  if (Object.keys( elements['elements'] ).length < 1 ){
+  // グラフデータが空の時の画面表示
+  if (Object.keys( prop['elements'] ).length < 1 ){
     return (
       <div>グラフ描画データが空です</div>
      );
-
-  }else{
-    console.log('エレメントデータが来たかも！？');
-    console.log(elements['elements']); 
-    return (
-      <CytoscapeComponent
-        elements={elements['elements']}
-        layout={layout3}
-        style={ {width: '900px', height: '900px'}}
-        cy={(cy) => cy.style( cyStylesheet )} />
-      );
   }
+
+  // 読み込み中画面の表示
+  if ( prop['isProgress'] == true ){
+    console.log('読み込み中！！！！！！');
+    return (
+      <Box sx={{ width: '100%' }}>
+        <LinearProgress />
+      </Box>
+    );
+  }
+
+  if(  prop['isProgress'] == false){
+    console.log('読み込み中終了！！！！！！');
+  }
+
+  // グラフデータ描画
+  return (
+    <Grid container spacing={2}>
+      <Grid item xs={12}>
+
+          <FormControl fullWidth>
+          <InputLabel>Grapf Layout Type</InputLabel>
+          <Select
+            labelId="demo-simple-select-label"
+            id="demo-simple-select"
+            value={graphLayoutType}
+            label="Graph Layout Type"
+            onChange={handleChange}
+          >
+            <MenuItem value={'random'}>random</MenuItem>
+            <MenuItem value={'circle'}>circle</MenuItem>
+            <MenuItem value={'grid'}>grid</MenuItem>
+            <MenuItem value={'breadthfirst'}>breadthfirst</MenuItem>
+            <MenuItem value={'concentric'}>concentric</MenuItem>
+            <MenuItem value={'cose'}>cose</MenuItem>
+
+          </Select>
+        </FormControl>
+
+      </Grid>
+
+      <Grid item xs={12}>
+
+      <CytoscapeComponent
+      elements={prop['elements']}
+      style={ {width: '900px', height: '600px'}}
+      cy={(cy) => {
+        //cy.style( cyStylesheet );
+        /*
+        cy.elements().layout({
+          name: 'random',
+          fit: true,
+          animate: true,
+        }).run()
+        */
+        cy.elements().layout(layout1).run()
+      }} 
+      />
+
+      </Grid>
+    </Grid>
+
+
+  );
 }
 
 export default NetworkGraph

@@ -6,6 +6,7 @@ import {
     AccountRepository,
     NetworkType,
     Address, 
+    MosaicId,
     RepositoryFactoryHttp,
     TransactionHttp,
     TransactionInfo,
@@ -19,15 +20,18 @@ export class SymbolManager{
 
     // 形宣言
     private _nodeUrl: string = 'https://marrons-xym-farm001.com:3001';
-    private _address: string;
+    private _address: string = '';
     private _sym = require("../../node_modules/symbol-sdk");
 
     // constructor
-    constructor(address:string = 'NBZPR42WLMMGN56YVRO7Y4PFRVTZP4OG4Q75GPA'){
-        this._address = address;
+    constructor(){
     }
 
-
+    // アドレスセッター
+    set address(address: string) {
+        this._address = address;
+    }
+    
     // 初期化
     public async init(){
         // Todo:Symbolアドレスのバリデーション
@@ -38,7 +42,12 @@ export class SymbolManager{
     }
 
     // トランザクション一覧からグラフ描画用データを出力
-    public async makeElementsByRecentTransactions(pageNumber:number = 1, pageSize:number = 10, pageLimit:number=5, includeAggregate:boolean=false){
+    public async makeElementsByRecentTransactions(
+        pageNumber:number = 1,
+        pageSize:number = 10,
+        pageLimit:number=5,
+        includeAggregate:boolean=false
+        ){
 
         // グラフ描画データ
         let elements: ElementDefinition[] = [];
@@ -225,6 +234,34 @@ export class SymbolManager{
 
     // AccountInfoの取得
     private async setAccountInfo(){
+        /*
+        console.log('Set Account info');
+        await this._accountHttp.getAccountInfo(this._accountAddress).subscribe({
+            next: (value) => {
+                this._accountInfo = value;
+            },
+            error: (error) => console.log("error: " + error),
+            complete: () => {
+                console.log(this._accountInfo);
+                console.log("completed");
+            }
+        });
+        */
+    }
+
+    // MosaciInfoの取得
+    public async getMosaicInfo(){
+        const mosaicIdHex = '7CB621559D97E2A1';
+        const mosaicId = new MosaicId(mosaicIdHex);
+
+        const repositoryFactory = new RepositoryFactoryHttp(this._nodeUrl);
+        const mosaicHttp = repositoryFactory.createMosaicRepository();
+
+        mosaicHttp.getMosaic(mosaicId).subscribe(
+            (mosaicInfo) => console.log(mosaicInfo),
+            (err) => console.error(err),
+        );
+
         /*
         console.log('Set Account info');
         await this._accountHttp.getAccountInfo(this._accountAddress).subscribe({

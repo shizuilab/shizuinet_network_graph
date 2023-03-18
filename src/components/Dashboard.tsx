@@ -142,31 +142,56 @@ const mdTheme = createTheme();
 function DashboardContent() {
 
   console.log('*** DashboardContent() ***')
+
   // トグルドロワーの開閉状態
   const [open, setOpen] = React.useState(false);
   const toggleDrawer = () => {
     setOpen(!open);
   };
 
-  // ユーザ入力
-  const [inputProp, setInputProp] = React.useState("NBZPR42WLMMGN56YVRO7Y4PFRVTZP4OG4Q75GPA")
-  //console.log(inputProp)
+  // グラフのモード（アカウント検索 or モザイク検索）
+  const [graphMode, setGraphMode] = React.useState('Account')
+  // ユーザ入力（ウォレットアドレス or モザイクID）
+  const [inputProp, setInputProp] = React.useState('')
+  // 検索オプション
+  const [includeAggregateOpt, setAggregateOpt] = React.useState(false)
+  const [pageNumberOpt, setPageNumberOpt] = React.useState(1)
+  const [pageSizeOpt, setPageSizeOpt] = React.useState(100)
+  const [pageLimitOpt, setPageLimitOpt] = React.useState(1)
 
+  // 読み込み画面制御用State
+  const [isProgress,setIsProgress] = React.useState(false);
   // グラフ描画データ
   const [graphElements, setGraphElements] = React.useState<ElementDefinition[]>([]);
 
   // SymbolManagerクラス
   let symbolManager = new SymbolManager();
+  symbolManager.getMosaicInfo();
+
 
   React.useEffect(() => {
     // useEffect自体ではasyncの関数を受け取れないので内部で関数を定義して呼び出す。
-    const getElements = async () =>{
-      const elements:ElementDefinition[] = await symbolManager.makeElementsByRecentTransactions(); 
-      console.log(elements);
-      setGraphElements(elements);
+    const getElements = async (graphMode:string, pageNumber:number, pageSize:number, pageLimit:number, includeAggregate:boolean ) =>{
+      console.log(graphMode)
+      // アカウントモードの場合
+      if( graphMode == 'Account'){
+        // 読み込み中画面を表示
+        setIsProgress(true);
+        // トランザクションからグラフ用データ生成
+        const elements:ElementDefinition[] = await symbolManager.makeElementsByRecentTransactions(pageNumber, pageSize, pageLimit, includeAggregate); 
+        // 読み込み中画面を非表示
+        setIsProgress(false);
+        setGraphElements(elements);
+      }else{
+      // モザイクモードの場合
+        console.log('モザイクモード！');
+      } 
     } 
-    getElements();
-  }, []);
+    if( inputProp != ''){
+      symbolManager.address = inputProp;
+      getElements(graphMode, pageNumberOpt, pageSizeOpt, pageLimitOpt, includeAggregateOpt );
+    }
+  }, [graphMode, inputProp,pageNumberOpt,pageSizeOpt,pageLimitOpt, includeAggregateOpt]);
 
 
   return (
@@ -216,7 +241,13 @@ function DashboardContent() {
             <Grid container spacing={3}>
               {/* 入力ダイアログ */}
               <Grid item xs={12}>
-                <FormDialog setInputProp={setInputProp}/>
+                <FormDialog 
+                setGraphMode={setGraphMode}
+                setInputProp={setInputProp}
+                setAggregateOpt={setAggregateOpt}
+                setPageNumberOpt={setPageNumberOpt}
+                setPageSizeOpt={setPageSizeOpt}
+                setPageLimitOpt={setPageLimitOpt}/>
               </Grid>
               {/* Network Status */}
               <Grid item xs={12}>
@@ -234,7 +265,7 @@ function DashboardContent() {
               {/* Network Graph */}
               <Grid item xs={12}>
                 <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column', height: 600, }}>
-                  <NetworkGraph elements={graphElements} />
+                  <NetworkGraph elements={graphElements} isProgress={isProgress} />
                 </Paper>
               </Grid>
             </Grid>
