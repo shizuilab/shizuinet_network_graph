@@ -177,6 +177,8 @@ const FormDialog =({setGraphMode, setInputProp, setAggregateOpt, setPageNumberOp
             />
             </Box>
 
+            <Divider variant="middle" />
+
             {/* トランザクション検索オプション*/}
             <Box sx={{ p:1, visibility: optionVisibility }}>
             <FormControl component="fieldset">
@@ -184,8 +186,8 @@ const FormDialog =({setGraphMode, setInputProp, setAggregateOpt, setPageNumberOp
                 <FormGroup aria-label="position" row sx={{m:1}}>
                   <FormControlLabel
                     value='Aggregate Option'
-                    control={<Switch color="primary" name={switchName1} checked={includeAggregateOpt} onChange={switchHandler}/>}
-                    label="アグリゲートトランザクションを含める"
+                    control={<Switch color="primary" name={switchName1} checked={includeAggregateOpt} onChange={switchHandler} disabled={true}/>}
+                    label="アグリゲートトランザクションを含める(※準備中)"
                     labelPlacement="end"
                   />
             </FormGroup>

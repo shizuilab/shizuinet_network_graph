@@ -6,14 +6,18 @@ import {
     AccountRepository,
     NetworkType,
     Address, 
+    MosaicInfo,
     MosaicId,
     RepositoryFactoryHttp,
     TransactionHttp,
     TransactionInfo,
-    Transaction
+    Transaction,
+    NamespaceId
   } from 'symbol-sdk'
 import { retry } from 'rxjs';
 import { createNoSubstitutionTemplateLiteral } from 'typescript';
+import axios from 'axios'
+import base32Encode from 'base32-encode'
 
 /* SymbolBlockchain管理クラス */
 export class SymbolManager{
@@ -60,7 +64,7 @@ export class SymbolManager{
         // 基点となるアドレスを各データセットに追加
         addressList.set(this._address,0);  
         nodes.push(
-            { data: { id: String(0), label: this._address }}
+            { data: { id: String(0), label: this._address, name:'name', type:'node', isParent:true }}
         );
         // ノードID初期化
         let id=1;
@@ -93,11 +97,17 @@ export class SymbolManager{
                     const hash = tx['transactionInfo']['hash']
 
                     // 送信先アドレス
-                    const recipientAddress = tx['recipientAddress']['address'] 
+                    let recipientAddress = tx['recipientAddress']['address'] 
+                    // 送信先アドレスがネームスペースだった場合
+                    if( recipientAddress == undefined || tx['recipientAddress'] instanceof NamespaceId ){
+                        // ネームスペースからアドレス形式に変換
+                        console.log('ノード追加時にネームスペースを発見！')
+                        recipientAddress = await this.getAddressByNamespace( tx['recipientAddress']  );
+                    }
                     if (addressList.has(recipientAddress) == false){
                         addressList.set(recipientAddress,id);
                         nodes.push(
-                            { data: { id: String(id++), label: recipientAddress }}
+                            { data: { id: String(id++), label: recipientAddress, name:'name', type:'node' }}
                         );
                     }
                     // 送信元アドレス
@@ -105,12 +115,12 @@ export class SymbolManager{
                     if (addressList.has(fromAddress) == false){
                         addressList.set(fromAddress,id)
                         nodes.push(
-                            { data: { id: String(id++), label: fromAddress }}
+                            { data: { id: String(id++), label: fromAddress, name:'name', type:'node' }}
                         );                        
                     }    
                     // ベクトル追加
                     vektor.push(
-                        { data: { source: addressList.get(fromAddress), target: addressList.get(recipientAddress), label: hash } }
+                        { data: { source: addressList.get(fromAddress), target: addressList.get(recipientAddress), label: hash, type:'edge' } }
                     );   
                     continue;
                 }
@@ -135,7 +145,7 @@ export class SymbolManager{
                     }            
 
                     // トランザクション詳細の取得
-                    const txInfo = await this.getTransactionInfo(hash);
+                    const txInfo = await this.getInnerTransactions(hash);
                     for( const info of txInfo ){
 
                         const inner_hash = tx['transactionInfo']['hash']
@@ -145,7 +155,7 @@ export class SymbolManager{
                         if (addressList.has(recipientAddress) == false){
                             addressList.set(recipientAddress,id)
                             nodes.push(
-                                { data: { id: String(id++), label: recipientAddress }}
+                                { data: { id: String(id++), label: recipientAddress, name:'name', type:'node' }}
                             );
                         }
                         // 送信元アドレス
@@ -156,12 +166,12 @@ export class SymbolManager{
                         if (addressList.has(fromAddress) == false){
                             addressList.set(fromAddress,id)
                             nodes.push(
-                                { data: { id: String(id++), label: fromAddress }}
+                                { data: { id: String(id++), label: fromAddress, name:'name', type:'node' }}
                             );
                         }
                         // ベクトル追加
                         vektor.push(
-                            { data: { source: addressList.get(fromAddress), target: addressList.get(recipientAddress), label: inner_hash } }
+                            { data: { source: addressList.get(fromAddress), target: addressList.get(recipientAddress), label: inner_hash, type:'edge' } }
                         );
                     }
                 }
@@ -183,15 +193,12 @@ export class SymbolManager{
     }
 
     // ハッシュからトランザクション詳細を取得
-    private async getTransactionInfo(hash:string){
+    private async getInnerTransactions(hash:string){
         
         let txInfo:TransactionInfo[] = [];
-
-        console.log('getTransactionInfo');
         const repositoryFactory = new RepositoryFactoryHttp(this._nodeUrl);
         const txRepo = repositoryFactory.createTransactionRepository();
         const result = await txRepo.getTransaction(hash, this._sym.TransactionGroup.Confirmed).toPromise();
-        //console.log(result)
 
         if ( result == undefined ){
             return txInfo;
@@ -208,6 +215,16 @@ export class SymbolManager{
             txInfo.push( tx )
         }
         return txInfo;
+    }
+
+    // ハッシュからトランザクション詳細を取得
+    public async getTransaction(hash:string){
+    
+        let txInfo:TransactionInfo[] = [];
+        const repositoryFactory = new RepositoryFactoryHttp(this._nodeUrl);
+        const txRepo = repositoryFactory.createTransactionRepository();
+        const result = await txRepo.getTransaction(hash, this._sym.TransactionGroup.Confirmed).toPromise();
+        return result;
     }
 
     // 直近のトランザクション履歴取得
@@ -232,48 +249,61 @@ export class SymbolManager{
         return result;
     }
 
-    // AccountInfoの取得
-    private async setAccountInfo(){
-        /*
-        console.log('Set Account info');
-        await this._accountHttp.getAccountInfo(this._accountAddress).subscribe({
-            next: (value) => {
-                this._accountInfo = value;
-            },
-            error: (error) => console.log("error: " + error),
-            complete: () => {
-                console.log(this._accountInfo);
-                console.log("completed");
+
+
+    // ネームスペースからアドレスへの変換
+    public async getAddressByNamespace( namespaceId:NamespaceId ){
+
+        let address = '';
+
+        // 16進文字列からバイト配列への変換
+        const hexToBytes = (hex: string): Uint8Array =>  {
+            const byteCount = hex.length / 2;
+            const byteArray = new Uint8Array(byteCount);
+        
+            for (let i = 0; i < byteCount; i++) {
+                const byte = parseInt(hex.substr(i * 2, 2), 16);
+                byteArray[i] = byte;
             }
-        });
-        */
+        
+            return byteArray;
+        }
+
+        const url = this._nodeUrl + '/namespaces/' + namespaceId.id.toHex();
+        console.log( url )
+
+        // 対象ネームスペースIDをノードに問い合わせ
+        return await axios.get(url)
+        .then(function (response: any) {
+	        console.log(response.data);
+            const rawAddress = response.data.namespace.alias.address
+            address = base32Encode( hexToBytes(rawAddress), 'RFC4648', { padding: false });
+	    })
+        .catch(function (error: any) {
+		    console.log("*** error ***")
+		    console.log(error)
+		})
+	    .then(function () {
+		    console.log ("*** 終了 ***")
+            console.log(address)
+            return address;
+		})        
+    }
+
+    // AccountInfoの取得
+    public async getAddress( address:string ){
+        return await Address.createFromRawAddress(address);
     }
 
     // MosaciInfoの取得
-    public async getMosaicInfo(){
-        const mosaicIdHex = '7CB621559D97E2A1';
-        const mosaicId = new MosaicId(mosaicIdHex);
+    public async getMosaicInfo( mosaicId:MosaicId ){
 
         const repositoryFactory = new RepositoryFactoryHttp(this._nodeUrl);
         const mosaicHttp = repositoryFactory.createMosaicRepository();
 
-        mosaicHttp.getMosaic(mosaicId).subscribe(
-            (mosaicInfo) => console.log(mosaicInfo),
-            (err) => console.error(err),
-        );
+        let info = await mosaicHttp.getMosaic(mosaicId).toPromise();
 
-        /*
-        console.log('Set Account info');
-        await this._accountHttp.getAccountInfo(this._accountAddress).subscribe({
-            next: (value) => {
-                this._accountInfo = value;
-            },
-            error: (error) => console.log("error: " + error),
-            complete: () => {
-                console.log(this._accountInfo);
-                console.log("completed");
-            }
-        });
-        */
+        return info;
+
     }
 }

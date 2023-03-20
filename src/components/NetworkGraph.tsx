@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import ReactDOM from "react-dom";
 import CytoscapeComponent from 'react-cytoscapejs';
-import { ElementDefinition } from "cytoscape";
+import { ElementDefinition, Stylesheet } from "cytoscape";
 import { useTheme } from '@mui/material/styles';
 import InputLabel from '@mui/material/InputLabel';
 import Box from '@mui/material/Box';
@@ -11,6 +11,8 @@ import Select, { SelectChangeEvent } from '@mui/material/Select';
 import Paper from '@mui/material/Paper';
 import Grid from '@mui/material/Grid';
 import LinearProgress from '@mui/material/LinearProgress';
+import { functionTypeAnnotation } from "@babel/types";
+
 
 // テストデータ生成
 function testElement(){
@@ -32,8 +34,36 @@ function testElement(){
  return elements2;
 }
 
+const stylesheet:Stylesheet[] = [
+  {
+    "selector": "node",
+    "style": {
+      "text-valign": "top",
+      "text-halign": "center",
+      "width": 20,
+      "height": 20,
+      "label": "data(label)",
+      "shape":"round-hexagon",
+    }
+  }, {
+    "selector": "node[isParent]",
+    "style": {
+      "shape":"star",
+      "width": 32,
+      "height": 32,
+    }
+  }, {
+    "selector": "edge",
+    "style": {
+      "width": 2,
+      "curve-style": "bezier",
+      "target-arrow-shape": "triangle"
+    }
+  }
+];
+
 /* ネットワークグラフ描画コンポーネント */
-const NetworkGraph = (prop) => {
+const NetworkGraph = ({elements, isProgress, graphCanvasSize, getElement }) => {
   
   console.log('NetworkGraph')
   const theme = useTheme();
@@ -41,18 +71,24 @@ const NetworkGraph = (prop) => {
   // グラフ描画タイプ
   const [graphLayoutType, setGraphLayoutType] = React.useState('random');
   const layout1 = { name: graphLayoutType,
-                    fit: true 
+                    fit: true,
+                    animate: true,
                   };
 
   // グラフ描画領域のサイズ
   const [canvasSize, setCanvasSize] = React.useState({width:100, height:100});
 
+  // キャンバスサイズの調整
   React.useEffect(() => {
-    setCanvasSize( prop['canvasSize']);
-    console.log(canvasSize)
+    setCanvasSize( graphCanvasSize );
+  }, [graphCanvasSize]);
 
-    console.log('~=======================================================')
-  }, [prop['canvasSize']]);
+  // グラフ要素クリック時処理
+  const tappedElement = function( event ){
+    const tgt = event.target;
+    const data = tgt.data();
+    getElement(data);
+  }
 
   /*
   const layout1 = { name: 'circle',
@@ -94,26 +130,21 @@ const NetworkGraph = (prop) => {
   const handleChange = (event: SelectChangeEvent) => {
     setGraphLayoutType(event.target.value as string);
   };
-  
+
   // グラフデータが空の時の画面表示
-  if (Object.keys( prop['elements'] ).length < 1 ){
+  if (elements.length < 1 ){
     return (
       <div>グラフ描画データが空です</div>
-     );
+    );
   }
 
   // 読み込み中画面の表示
-  if ( prop['isProgress'] == true ){
-    console.log('読み込み中！！！！！！');
+  if ( isProgress ){
     return (
       <Box sx={{ mx: 'auto', my: 'auto', width: '100%' }}>
         <LinearProgress />
       </Box>
     );
-  }
-
-  if(  prop['isProgress'] == false){
-    console.log('読み込み中終了！！！！！！');
   }
 
   // グラフデータ描画
@@ -145,18 +176,18 @@ const NetworkGraph = (prop) => {
       <Grid item xs={12}>
 
       <CytoscapeComponent
-      elements={prop['elements']}
-      style={ {width: canvasSize.width, height: canvasSize.height, background: 'red'}}
+      elements={elements}
+      stylesheet={stylesheet}
+      style={{width: canvasSize.width,
+              height: canvasSize.height,
+              background: 'red',
+            } }
       cy={(cy) => {
-        //cy.style( cyStylesheet );
-        /*
-        cy.elements().layout({
-          name: 'random',
-          fit: true,
-          animate: true,
-        }).run()
-        */
-        cy.elements().layout(layout1).run()
+        // グラフ表示タイプの適用
+        cy.elements().layout(layout1).run();
+        // ノードとエッジがクリックされた時
+        cy.on('tap', 'edge', tappedElement);
+        cy.on("tap", 'node', tappedElement);
       }} 
       />
 
