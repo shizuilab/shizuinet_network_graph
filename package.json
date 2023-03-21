@@ -35,6 +35,7 @@
     "typescript": "^4.9.5",
     "web-vitals": "^2.1.4"
   },
+  "homepage": "https://kurikou02.github.io/symbol_network_graph/",
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",

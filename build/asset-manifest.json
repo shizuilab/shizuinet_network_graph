@@ -1,0 +1,22 @@
+{
+  "files": {
+    "main.css": "/symbol_network_graph/static/css/main.4bc01cb4.chunk.css",
+    "main.js": "/symbol_network_graph/static/js/main.a06758c1.chunk.js",
+    "main.js.map": "/symbol_network_graph/static/js/main.a06758c1.chunk.js.map",
+    "runtime-main.js": "/symbol_network_graph/static/js/runtime-main.9bd2ddfb.js",
+    "runtime-main.js.map": "/symbol_network_graph/static/js/runtime-main.9bd2ddfb.js.map",
+    "static/js/2.927363e4.chunk.js": "/symbol_network_graph/static/js/2.927363e4.chunk.js",
+    "static/js/2.927363e4.chunk.js.map": "/symbol_network_graph/static/js/2.927363e4.chunk.js.map",
+    "static/js/3.18738ace.chunk.js": "/symbol_network_graph/static/js/3.18738ace.chunk.js",
+    "static/js/3.18738ace.chunk.js.map": "/symbol_network_graph/static/js/3.18738ace.chunk.js.map",
+    "index.html": "/symbol_network_graph/index.html",
+    "static/css/main.4bc01cb4.chunk.css.map": "/symbol_network_graph/static/css/main.4bc01cb4.chunk.css.map",
+    "static/js/2.927363e4.chunk.js.LICENSE.txt": "/symbol_network_graph/static/js/2.927363e4.chunk.js.LICENSE.txt"
+  },
+  "entrypoints": [
+    "static/js/runtime-main.9bd2ddfb.js",
+    "static/js/2.927363e4.chunk.js",
+    "static/css/main.4bc01cb4.chunk.css",
+    "static/js/main.a06758c1.chunk.js"
+  ]
+}
