@@ -18,12 +18,14 @@ import { retry } from 'rxjs';
 import { createNoSubstitutionTemplateLiteral } from 'typescript';
 import axios from 'axios'
 import base32Encode from 'base32-encode'
+import { Residents } from '../components/Dashboard';
+import { indigo } from '@mui/material/colors';
 
 /* SymbolBlockchain管理クラス */
 export class SymbolManager{
 
     // 形宣言
-    private _nodeUrl: string = 'https://marrons-xym-farm001.com:3001';
+    private _nodeUrl: string = 'https://ik1-432-48199.vs.sakura.ne.jp:3001';
     private _address: string = '';
     private _sym = require("../../node_modules/symbol-sdk");
 
@@ -50,8 +52,15 @@ export class SymbolManager{
         pageNumber:number = 1,
         pageSize:number = 10,
         pageLimit:number=5,
-        includeAggregate:boolean=false
+        includeAggregate:boolean=false,
+        townList:Residents[],
+        townListIndex:{},
         ){
+
+        // TODO:この関数が太りすぎているいるので、外だしする
+        //（SymbolManagerクラスなので、Symbol関連処理だけに完結させたい）
+
+        // TODO:ネームスペースでのリストのマッチングが上手くいかない場合がある
 
         // グラフ描画データ
         let elements: ElementDefinition[] = [];
@@ -61,10 +70,25 @@ export class SymbolManager{
         // アドレス管理リスト(グラフのノード重複登録防止)
         let addressList:Map<string, number> = new Map();
 
+        // Symbolタウン住民プロフィール
+        let name = '';
+        let image = '';
+        let link = '';
+        let namespace = '';    
+        let isResidents = '';
+
         // 基点となるアドレスを各データセットに追加
         addressList.set(this._address,0);  
+        // Symbolタウン住民かのチェック
+        if( this._address in townListIndex ){
+            const idx = townListIndex[this._address];
+            name = townList[ idx ][0];
+            image = townList[ idx ][2];
+            link = townList[ idx ][1];
+            isResidents = 'yes';
+        }
         nodes.push(
-            { data: { id: String(0), label: this._address, name:'name', type:'node', isParent:true }}
+            { data: { id: String(0), label: this._address, isParent:true, isResidents:isResidents, name:name, image:image, link:link, type:'node' }}
         );
         // ノードID初期化
         let id=1;
@@ -73,7 +97,7 @@ export class SymbolManager{
         // 取得上限に達するか、最後のPageにたどり着くまで繰り返し取得
         let offset:number = 0;  // トランザクション検索オフセット(TransactionID)
         do{
-            
+
             // トランザクション履歴取得
             const page = await this.getRecentTransactions(pageNumber++, pageSize, offset);
             if( page == undefined ){
@@ -98,29 +122,75 @@ export class SymbolManager{
 
                     // 送信先アドレス
                     let recipientAddress = tx['recipientAddress']['address'] 
+
                     // 送信先アドレスがネームスペースだった場合
                     if( recipientAddress == undefined || tx['recipientAddress'] instanceof NamespaceId ){
                         // ネームスペースからアドレス形式に変換
-                        console.log('ノード追加時にネームスペースを発見！')
                         recipientAddress = await this.getAddressByNamespace( tx['recipientAddress']  );
+                        // ネームスペース名も取得
+                        namespace = await this.getNamespaceName( tx['recipientAddress'] )
                     }
+
+
+                    // Symbolタウン住民か判定(アドレスまたはネームスペース)
+                    if(recipientAddress in townListIndex){
+                        const idx = townListIndex[recipientAddress];
+                        name = townList[ idx ][0];
+                        image = townList[ idx ][2];
+                        link = townList[ idx ][1];
+                        isResidents = 'yes';
+                    }else if(namespace in townListIndex ){
+                        const idx = townListIndex[namespace];
+                        name = townList[ idx ][0];
+                        image = townList[ idx ][2];
+                        link = townList[ idx ][1];
+                        isResidents = 'yes';
+                    }
+
                     if (addressList.has(recipientAddress) == false){
                         addressList.set(recipientAddress,id);
                         nodes.push(
-                            { data: { id: String(id++), label: recipientAddress, name:'name', type:'node' }}
+                            { data: { id: String(id++), label: recipientAddress, namespace:namespace, isResidents:isResidents, name:name, image:image,link:link, type:'node'}}
                         );
                     }
+
+                    name = '';
+                    image = '';
+                    link = '';
+                    namespace='';
+                    isResidents = '';
+
                     // 送信元アドレス
                     const fromAddress = tx['signer']['address'][`address`]  
+
                     if (addressList.has(fromAddress) == false){
+
+
+                        // Symbolタウン住民か判定
+                        if(fromAddress in townListIndex ){
+                            const idx = townListIndex[fromAddress];
+                            name = townList[ idx ][0];
+                            image = townList[ idx ][2];
+                            link = townList[ idx ][1];
+                            isResidents = 'yes';
+                        }
+
+
                         addressList.set(fromAddress,id)
                         nodes.push(
-                            { data: { id: String(id++), label: fromAddress, name:'name', type:'node' }}
+                            { data: { id: String(id++), label: fromAddress, isResidents:isResidents, name:name, image:image,link:link, type:'node' }}
                         );                        
                     }    
+
+                    name = '';
+                    namespace = '';
+                    image = '';
+                    link = '';
+                    isResidents = '';
+
                     // ベクトル追加
                     vektor.push(
-                        { data: { source: addressList.get(fromAddress), target: addressList.get(recipientAddress), label: hash, type:'edge' } }
+                        { data: { source: addressList.get(fromAddress), target: addressList.get(recipientAddress), label: hash, isParent:true, type:'edge' } }
                     );   
                     continue;
                 }
@@ -270,12 +340,11 @@ export class SymbolManager{
         }
 
         const url = this._nodeUrl + '/namespaces/' + namespaceId.id.toHex();
-        console.log( url )
 
         // 対象ネームスペースIDをノードに問い合わせ
         return await axios.get(url)
         .then(function (response: any) {
-	        console.log(response.data);
+	        //console.log(response.data);
             const rawAddress = response.data.namespace.alias.address
             address = base32Encode( hexToBytes(rawAddress), 'RFC4648', { padding: false });
 	    })
@@ -284,10 +353,22 @@ export class SymbolManager{
 		    console.log(error)
 		})
 	    .then(function () {
-		    console.log ("*** 終了 ***")
-            console.log(address)
+		    //console.log ("*** 終了 ***")
+            //console.log(address)
             return address;
 		})        
+    }
+
+    // ネームスペースIDからネームスペース名を取得
+    public async getNamespaceName( namespaceId:NamespaceId){
+
+        // ネームスペース名の取得
+        const repositoryFactory = new RepositoryFactoryHttp(this._nodeUrl);
+        const nameRepo = repositoryFactory.createNamespaceRepository();
+        const names = await nameRepo.getNamespacesNames([namespaceId]).toPromise()
+        const fullName = names?.at(0)?.name ?? ''
+
+        return fullName;
     }
 
     // AccountInfoの取得
@@ -306,4 +387,91 @@ export class SymbolManager{
         return info;
 
     }
+
+    // ネームスーペースからアドレス変換のテスト
+    public async convertNamespace(){
+        const list = 
+        ['mitsuo7777',
+        'kogee',
+        'crypto',
+        'yuki',
+        'marron',
+        'melonsoda',
+        'mii',
+        'kuchibashi',
+        'akamikko',
+        'shizuilab',
+        'cat',
+        'wecanch',
+        'symbolblog',
+        'kamome',
+        'ninelives',
+        'poppoppo',
+        'usagi',
+        'villhell',
+        'radio',
+        'mash',
+        'teria',
+        'tokenlive',
+        'hanabatake',
+        'yurei',
+        'kotopapa',
+        'pasomi',
+        'neluta',
+        'eip',
+        'onem',
+        'nononon',
+        'karriz',
+        'xrpl',
+        'tochio',
+        'sy1000mg',
+        'cryptobeliever',
+        'narikin',
+        'matsuoka',
+        'bootarou',
+        'enako',
+        'boceck',
+        'katsutarou',
+        'yobi',
+        'butuyokuman',
+        'toshi',
+        'farfan',
+        'honanem',
+        'nonki71',
+        'shizuilab',
+        'fukurou',
+        'n1040',
+        'mikun_nem',
+        'hainetu',
+        'curupo',
+        'kyokot']
+
+        // ネームスペース情報取得用
+        const repositoryFactory = new RepositoryFactoryHttp(this._nodeUrl);
+        const nameRepo = repositoryFactory.createNamespaceRepository();
+
+        let i=0;
+
+        let result = ''
+
+        for( const name of list){
+
+            const namespaceid = new NamespaceId( name );
+
+            console.log( name + ':' + namespaceid.toHex() )
+
+            // ネームスペースがアドレスに紐づいてるかチェック
+            await nameRepo.getNamespace(namespaceid).subscribe(
+                (info) => {
+                    if( info.active == true && info.alias.type == 2){
+                        console.log(name + ':' + info.alias.address?.plain() )
+                    }else{
+                        console.log( name + ': not active or no alias')
+                    }
+                },
+                ( err ) => console.log( console.log( name + ':err') )
+            )
+        }
+    }
+
 }

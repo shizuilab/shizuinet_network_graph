@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { styled, alpha, createTheme, ThemeProvider } from '@mui/material/styles';
-
+import * as fs from "fs"
+import axios from 'axios'
 
 import CssBaseline from '@mui/material/CssBaseline';
 import MuiDrawer from '@mui/material/Drawer';
@@ -42,7 +43,7 @@ function Copyright(props: any) {
     <Typography variant="body2" color="text.secondary" align="center" {...props}>
       {'Copyright © '}
       <Link color="inherit" href="https://twitter.com/kurikou_XymCity">
-        Twitter
+        @kurikou_XymCity
       </Link>{' '}
       {new Date().getFullYear()}
       {'.'}
@@ -164,6 +165,64 @@ const MemoNetworkGraph = React.memo(NetworkGraph);
 const MemoFormDialog = React.memo(FormDialog);
 const MemoElementDetailInfo = React.memo(ElementDetailInfo);
 
+// 投げXYMタウンリストの型定義
+export type Residents = {
+  name:string,
+  twitter:string,
+  image:string,
+  address:string
+};
+
+// 投げXYMタウンリストの型定義
+type SheetResponse = {
+  majorDimension:string,
+  range:string,
+  values:[]
+};
+
+// 全角文字判定
+function containsZenkaku(str: string): boolean {
+  // 全角文字が含まれているかどうかを判定する正規表現
+  const zenkakuRegexp = /[^\x01-\x7E]/; // 0x01-0x7Eは半角文字の範囲
+
+  return zenkakuRegexp.test(str);
+}
+
+// 投げXYMタウンリストのスプレッドシート読込
+async function readSpreadsheets(){
+
+  const url = 'https://sheets.googleapis.com/v4/spreadsheets/1FgaTWWvIBk0f0U2aQ08oz69s4SmpJGiRmezlL2Q62nw/values/sheet1?key=AIzaSyBriz6kRinIhG2knJ2LIfEfoDCILECcyBU'
+
+  // APIでSymbolタウンリストを読み込む
+  let list:SheetResponse;
+  return await axios.get(url)
+  .then(function (response: any) {
+    list = response.data;
+  })
+    .catch(function (error: any) {
+    console.log("*** error ***")
+    console.log(error)
+  })
+  .then(function () {
+    console.log ("*** 終了 ***")
+    return list;
+  })      
+
+}
+
+// CSVファイルを読み込む関数
+function readCSVFile(filePath: string): string[] {
+  const fileData = fs.readFileSync(filePath, 'utf-8');
+  return fileData.split('\n');
+}
+
+// 1行ずつデータを処理する関数
+function processDataLine(line: string): void {
+  const data = line.split(',');
+  // TODO: データの処理を行う
+  console.log(data);
+}
+
 // メインコンポーネント
 function DashboardContent() {
 
@@ -203,11 +262,43 @@ function DashboardContent() {
     setElementData( data );
   },[])
 
+  // 投げXYMタウンリスト
+  const [symbolTownList, setSymbolTownList] = React.useState<Residents[]>([])
+  const [townListIndex, setTownListIndex] = React.useState<{ [key:string]: number }>({})
+
   // Symbol管理クラス
   const [symbolManager, setSymbolManager] = React.useState<SymbolManager>( new SymbolManager() );
 
-  // 初回実行時処理
+  // 初回実行時処理 -> 投げXYMタウンリストを読み込み
   React.useEffect(() => {
+  
+    async function getSymbolTownList(){
+      const list = await readSpreadsheets();
+      // 投げXYMタウンリストを保持
+      setSymbolTownList( list.values );
+
+      // 検索用インデックスリストを作成
+      let indexList:{ [key:string]: number } = {}
+      for( let idx=0; idx < list.values.length; idx++){
+        // アドレスが空白または全角混じりならスキップ
+        const val = list.values[idx];
+        if( containsZenkaku(val[3]) != false || val[3] == '' ){
+          continue
+        }
+        indexList[ val[3] ] =  idx;
+      }
+      console.log( indexList )
+      setTownListIndex( indexList );
+    }
+    getSymbolTownList();
+
+    // テスト用：リストのネームスペースをすべてアドレスに変換
+    /*
+    async function convertAddress(){
+      symbolManager.convertNamespace()
+    }
+    convertAddress();
+    */
 
   }, []);
 
@@ -237,7 +328,7 @@ function DashboardContent() {
         // 読み込み中画面を表示
         setIsProgress(true);
         // トランザクション履歴からグラフ用データ生成
-        const elements:ElementDefinition[] = await symbolManager.makeElementsByRecentTransactions(pageNumber, pageSize, pageLimit, includeAggregate); 
+        const elements:ElementDefinition[] = await symbolManager.makeElementsByRecentTransactions(pageNumber, pageSize, pageLimit, includeAggregate, symbolTownList, townListIndex); 
         // 読み込み中画面を非表示
         setIsProgress(false);
         // グラフ描画データの更新
@@ -251,8 +342,8 @@ function DashboardContent() {
     // ユーザ入力の受け取り( 空なら何もしない )
     if( inputProp != ''){
       
-      // Todo: 入力値のバリデーション処理
-      // Todo: モザイクID受け取った場合の受け取り方（管理クラスに変数追加）
+      // TODO: 入力値のバリデーション処理
+      // TODO: モザイクID受け取った場合の受け取り方（管理クラスに変数追加）
 
       symbolManager.address = inputProp;
       getElements(graphMode, pageNumberOpt, pageSizeOpt, pageLimitOpt, includeAggregateOpt );

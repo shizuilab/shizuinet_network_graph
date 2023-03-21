@@ -43,14 +43,24 @@ const stylesheet:Stylesheet[] = [
       "width": 20,
       "height": 20,
       "label": "data(label)",
-      "shape":"round-hexagon",
+      "shape":"ellipse",
     }
   }, {
     "selector": "node[isParent]",
     "style": {
       "shape":"star",
-      "width": 32,
-      "height": 32,
+      "width": 50,
+      "height": 50,
+      "background-color":"Yellow",
+    }
+  },
+  {
+    "selector": "node[isResidents = 'yes']",
+    "style": {
+      "shape":"round-hexagon",
+      "width": 50,
+      "height": 50,
+      "background-image":"data(image)"
     }
   }, {
     "selector": "edge",
@@ -69,7 +79,7 @@ const NetworkGraph = ({elements, isProgress, graphCanvasSize, getElement }) => {
   const theme = useTheme();
 
   // グラフ描画タイプ
-  const [graphLayoutType, setGraphLayoutType] = React.useState('random');
+  const [graphLayoutType, setGraphLayoutType] = React.useState('concentric');
   const layout1 = { name: graphLayoutType,
                     fit: true,
                     animate: true,
@@ -180,7 +190,6 @@ const NetworkGraph = ({elements, isProgress, graphCanvasSize, getElement }) => {
       stylesheet={stylesheet}
       style={{width: canvasSize.width,
               height: canvasSize.height,
-              background: 'red',
             } }
       cy={(cy) => {
         // グラフ表示タイプの適用

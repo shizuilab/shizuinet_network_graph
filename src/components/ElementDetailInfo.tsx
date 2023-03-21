@@ -150,9 +150,12 @@ const ElementDetailInfo = ( {elementData, symbolManager } )=> {
           </Stack>
 
           {/* ネームスペース */}
+          { /* TODO: ネームスペース情報も表示する */}
+          
+          {/* 名前 */}
           <TextField
               id="outlined-read-only-input"
-              label="ネームスペース"
+              label="Name"
               variant="standard"
               value={elementData.name}
               InputProps={{
@@ -166,14 +169,14 @@ const ElementDetailInfo = ( {elementData, symbolManager } )=> {
                 id="outlined-read-only-input"
                 label="Twitter/SNS"
                 variant="standard"
-                value={elementData.name}
+                value={elementData.link}
                 InputProps={{
                   readOnly: true,
                 }}
               />
             <Tooltip title="ViewExplorer">
               <IconButton color="primary" 
-              href={ symbolExplorerBaseUrl + accountsQuery + elementData.label } 
+              href={ elementData.link } 
               target="_blank" rel="noopener noreferrer">
               <OpenInNewIcon />
               </IconButton>
