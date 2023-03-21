@@ -150,16 +150,24 @@ const Drawer = styled(MuiDrawer, { shouldForwardProp: (prop) => prop !== 'open' 
 // テーマ設定用
 const isDarkMode = false;
 const mdTheme = createTheme({
-  palette: {
-    mode: isDarkMode ? 'dark' : 'light'
-  },
   // フォントサイズを小さめに調整
   typography: {
     fontSize: 12,
     button: {
       textTransform: "none"
-    }
- }
+    },
+  },
+  // カラーテーマ設定
+  palette: {
+    mode: 'light',
+    primary: {
+      main: '#4E2C70',
+      contrastText: '#FFFFFF',
+    },
+    background: {
+      default: '#bdbdbd',
+    },
+  },  
 });
 
 // 不要な再描画を抑えるためにMemo化する処理
@@ -397,6 +405,8 @@ function DashboardContent() {
             </Paper>
 
             {/* 検索フォーム */}
+            {/* TODO: 検索フォーム実装する */}
+            {/*}
             <Search>
               <SearchIconWrapper>
                 <SearchIcon />
@@ -406,6 +416,7 @@ function DashboardContent() {
                 inputProps={{ 'aria-label': 'search' }}
               />
             </Search>
+          　{*/}
 
           </Toolbar>
         </AppBar>

@@ -12,6 +12,7 @@ import Paper from '@mui/material/Paper';
 import Grid from '@mui/material/Grid';
 import LinearProgress from '@mui/material/LinearProgress';
 import { functionTypeAnnotation } from "@babel/types";
+import Image from '@/assets/XYM City.png';
 
 
 // テストデータ生成
@@ -136,6 +137,12 @@ const NetworkGraph = ({elements, isProgress, graphCanvasSize, getElement }) => {
   ]
   */
 
+  const paperStyles = {
+    paperContainer: {
+        backgroundImage: `url(https://drive.google.com/uc?export=view&id=1AXNcvIe5pUIaY1mdftwNgIOCFENO4AQf)`,
+    }
+  }
+
   // グラフ表示タイプ変更ハンドラ
   const handleChange = (event: SelectChangeEvent) => {
     setGraphLayoutType(event.target.value as string);
@@ -154,7 +161,14 @@ const NetworkGraph = ({elements, isProgress, graphCanvasSize, getElement }) => {
   // グラフデータが空の時の画面表示
   if (elements.length < 1 ){
     return (
-      <div>グラフ描画データが空です</div>
+      <Box sx={{ 
+        width: '100%',
+        height: '100%',
+        backgroundRepeat: 'no-repeat',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center center',
+        backgroundImage:'url(https://drive.google.com/uc?export=view&id=1AXNcvIe5pUIaY1mdftwNgIOCFENO4AQf)'}}>
+      </Box>
     );
   }
   

@@ -134,7 +134,7 @@ const FormDialog =({setGraphMode, setInputProp, setAggregateOpt, setPageNumberOp
 
     // 初回のみ実行：ダイアログを表示
     React.useEffect(() => {
-      //setOpen(true);
+      setOpen(true);
     }, []);
         
 
