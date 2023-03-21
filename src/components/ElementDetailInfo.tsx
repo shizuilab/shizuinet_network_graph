@@ -323,8 +323,7 @@ const ElementDetailInfo = ( {elementData, symbolManager } )=> {
 
     return (
 
-        <React.Fragment>
-          何も選択されてません       
+        <React.Fragment>     
         </React.Fragment>
 
       );

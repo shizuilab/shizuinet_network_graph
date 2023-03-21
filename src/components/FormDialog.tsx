@@ -38,8 +38,8 @@ const FormDialog =({setGraphMode, setInputProp, setAggregateOpt, setPageNumberOp
     // 検索モード指定（アカウント検索 or モザイク検索）
     const [mode, setMode] = React.useState('Account');
     // 入力フォーム（ウォレットアドレス or モザイクID）  
-    const [formValue, setFormValue] = React.useState("NBZPR42WLMMGN56YVRO7Y4PFRVTZP4OG4Q75GPA");
-    const [inputLabel, setInputLabel] = React.useState('ウォレットアドレス');
+    const [formValue, setFormValue] = React.useState("");
+    const [inputLabel, setInputLabel] = React.useState('Symbol Wallet Address');
     // 検索オプション(アグリゲートトランザクション含むか、検索ページ数等)
     const [includeAggregateOpt, setIncludeAggregateOpt] = React.useState(false);
     const [pageNumber, setPageNumber] = React.useState(1);
@@ -97,7 +97,7 @@ const FormDialog =({setGraphMode, setInputProp, setAggregateOpt, setPageNumberOp
 
       if( event.target.value == 'Account'){
         setOptionVisibility(`visible`);
-        setInputLabel('ウォレットアドレス')
+        setInputLabel('Symbol Wallet Address')
       }else{
         setOptionVisibility(`hidden`);
         setInputLabel('モザイクID')
@@ -125,6 +125,11 @@ const FormDialog =({setGraphMode, setInputProp, setAggregateOpt, setPageNumberOp
           break;
       }
     };
+
+    // サンプルアドレスセットボタンハンドラ
+    const handleSetSampleAddress = ( event ) => {
+      setFormValue("NCAY26LEBPOXM7NPCNV4HL4EH5WM6UJ5UUN4UGA");
+    }
   
 
     // 初回のみ実行：ダイアログを表示
@@ -136,14 +141,16 @@ const FormDialog =({setGraphMode, setInputProp, setAggregateOpt, setPageNumberOp
     return (
       <div>
         <Button variant="outlined" onClick={handleClickOpen}>
-          Open form dialog
+          ChangeSetting
         </Button>
 
         <Dialog open={open} onClose={handleClose}>
-          <DialogTitle>Symbolネットワークグラフ</DialogTitle>          
+          <DialogTitle>Symbol Network Graph</DialogTitle>          
           <DialogContent>
 
             {/*モード選択ラジオボタン*/}
+            {/*
+            // TODO: モザイク検索モードを追加
             <Box sx={{p: 1 }}>
               <FormControl component="fieldset">
                 <FormLabel component="legend">モード選択</FormLabel>
@@ -155,10 +162,11 @@ const FormDialog =({setGraphMode, setInputProp, setAggregateOpt, setPageNumberOp
 
               <Typography variant="body2" gutterBottom>
                 アカウント：対象のアカウントと繋がりのあるアカウントを表示します。<br/>
-                モザイク：対象のモザイクの保有者の繋がりを表示します。<br/>
+                モザイク：対象のモザイクの保有者の繋がりを表示します。 ※準備中<br/>
               </Typography>
               
             </Box>
+            /*}
 
             {/* ウォレットアドレス or モザイクIDの入力 */}
             <Box sx={{ p: 1}}>
@@ -175,23 +183,29 @@ const FormDialog =({setGraphMode, setInputProp, setAggregateOpt, setPageNumberOp
                 setFormValue(e.target.value)
               }}
             />
+            <Button variant="text" onClick={handleSetSampleAddress}>Set Sample Address</Button>
             </Box>
+
+           
 
             <Divider variant="middle" />
 
             {/* トランザクション検索オプション*/}
             <Box sx={{ p:1, visibility: optionVisibility }}>
-            <FormControl component="fieldset">
-              <FormLabel>検索オプション(任意)</FormLabel>
-                <FormGroup aria-label="position" row sx={{m:1}}>
-                  <FormControlLabel
-                    value='Aggregate Option'
-                    control={<Switch color="primary" name={switchName1} checked={includeAggregateOpt} onChange={switchHandler} disabled={true}/>}
-                    label="アグリゲートトランザクションを含める(※準備中)"
-                    labelPlacement="end"
-                  />
-            </FormGroup>
-            </FormControl>
+              <FormControl component="fieldset">
+                <FormLabel>Optional</FormLabel>
+
+                  {/*
+                  <FormGroup aria-label="position" row sx={{m:1}}>
+                    <FormControlLabel
+                      value='Aggregate Option'
+                      control={<Switch color="primary" name={switchName1} checked={includeAggregateOpt} onChange={switchHandler} disabled={true}/>}
+                      label="アグリゲートトランザクションを含める(※準備中)"
+                      labelPlacement="end"
+                    />
+                  </FormGroup>
+                  */}
+              </FormControl>
             </Box>
 
             {/* ページ検索オプション*/}
@@ -199,7 +213,7 @@ const FormDialog =({setGraphMode, setInputProp, setAggregateOpt, setPageNumberOp
             <Grid container spacing={3}>
               <Grid item xs={4}>
                 <FormControl variant="standard" sx={{ m: 1, minWidth: 120 }}>
-                  <InputLabel id="demo-simple-select-label">ページ番号</InputLabel>
+                  <InputLabel id="demo-simple-select-label">PageNum</InputLabel>
                   <Select
                     labelId="demo-simple-select-label"
                     id="demo-simple-select"
@@ -219,13 +233,13 @@ const FormDialog =({setGraphMode, setInputProp, setAggregateOpt, setPageNumberOp
                     <MenuItem value={9}>9</MenuItem>
                     <MenuItem value={10}>10</MenuItem>           
                   </Select>
-                  <FormHelperText>検索開始するページ位置(古い順)</FormHelperText>
+                  <FormHelperText>read page position<br/>(Oldest first)</FormHelperText>
                 </FormControl>
               </Grid>
               <Grid item xs={4}>
 
                 <FormControl  variant="standard" sx={{ m: 1, minWidth: 120 }}>
-                <InputLabel id="demo-simple-select-label">ページサイズ</InputLabel>
+                <InputLabel id="demo-simple-select-label">PageSize</InputLabel>
                 <Select
                   labelId="demo-simple-select-label"
                   id="demo-simple-select"
@@ -239,14 +253,14 @@ const FormDialog =({setGraphMode, setInputProp, setAggregateOpt, setPageNumberOp
                     <MenuItem value={50}>50</MenuItem>
                     <MenuItem value={100}>100</MenuItem>
                   </Select>
-                  <FormHelperText>1ページに含むトランザクション数</FormHelperText>
+                  <FormHelperText>Number of transactions to include on page</FormHelperText>
                 </FormControl>
 
               </Grid>
               <Grid item xs={4}>
 
               <FormControl  variant="standard" sx={{ m: 1, minWidth: 120 }}>
-              <InputLabel id="demo-simple-select-label">最大ページ数</InputLabel>
+              <InputLabel id="demo-simple-select-label">PageLimit</InputLabel>
               <Select
                 labelId="demo-simple-select-label"
                 id="demo-simple-select"
@@ -261,12 +275,13 @@ const FormDialog =({setGraphMode, setInputProp, setAggregateOpt, setPageNumberOp
                 <MenuItem value={50}>50</MenuItem>
                 <MenuItem value={100}>100</MenuItem>
               </Select>
-              <FormHelperText>何ページ分遡って検索するか</FormHelperText>
+              <FormHelperText>read page position</FormHelperText>
             </FormControl>
 
               </Grid>
             </Grid>            
-            <Alert severity="warning">最大ページ数を大きくしすぎると、検索に時間がかかる場合があります。</Alert>
+            <Alert severity="warning">最大ページ数を大きくしすぎると、検索に時間がかかる場合があります。<br/>
+            (If the maximum number of pages is set too large, the search will take longer)</Alert>
             </Box>        
           </DialogContent>
 

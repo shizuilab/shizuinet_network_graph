@@ -388,6 +388,18 @@ export class SymbolManager{
 
     }
 
+    public async getMosaicInfoByStr( id:string){
+
+        const mosaicid = new MosaicId( id )
+        const repositoryFactory = new RepositoryFactoryHttp(this._nodeUrl);
+        const mosaicHttp = repositoryFactory.createMosaicRepository();
+
+        let info = await mosaicHttp.getMosaic(mosaicid).toPromise();
+
+        return info;
+
+    }
+
     // ネームスーペースからアドレス変換のテスト
     public async convertNamespace(){
         const list = 

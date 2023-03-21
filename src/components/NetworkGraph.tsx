@@ -141,15 +141,8 @@ const NetworkGraph = ({elements, isProgress, graphCanvasSize, getElement }) => {
     setGraphLayoutType(event.target.value as string);
   };
 
-  // グラフデータが空の時の画面表示
-  if (elements.length < 1 ){
-    return (
-      <div>グラフ描画データが空です</div>
-    );
-  }
-
   // 読み込み中画面の表示
-  if ( isProgress ){
+  if ( isProgress == true ){
     return (
       <Box sx={{ mx: 'auto', my: 'auto', width: '100%' }}>
         <LinearProgress />
@@ -157,6 +150,14 @@ const NetworkGraph = ({elements, isProgress, graphCanvasSize, getElement }) => {
     );
   }
 
+    
+  // グラフデータが空の時の画面表示
+  if (elements.length < 1 ){
+    return (
+      <div>グラフ描画データが空です</div>
+    );
+  }
+  
   // グラフデータ描画
   return (
     <Grid container spacing={2}>

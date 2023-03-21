@@ -156,6 +156,9 @@ const mdTheme = createTheme({
   // フォントサイズを小さめに調整
   typography: {
     fontSize: 12,
+    button: {
+      textTransform: "none"
+    }
  }
 });
 
@@ -300,6 +303,14 @@ function DashboardContent() {
     convertAddress();
     */
 
+    // モザイク情報取得と表示のテスト
+    async function mosaicTest(){
+      const info = await symbolManager.getMosaicInfoByStr( '71C8C78201C17DB6' )
+      console.log( info )
+    }
+    mosaicTest()
+
+
   }, []);
 
   // ウィンドウサイズ変化時の処理
@@ -344,7 +355,6 @@ function DashboardContent() {
       
       // TODO: 入力値のバリデーション処理
       // TODO: モザイクID受け取った場合の受け取り方（管理クラスに変数追加）
-
       symbolManager.address = inputProp;
       getElements(graphMode, pageNumberOpt, pageSizeOpt, pageLimitOpt, includeAggregateOpt );
     
