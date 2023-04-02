@@ -10,7 +10,7 @@ export const WebSocketManager = () => {
     // #0.WebSocket関連の処理は副作用なので、useEffect内で実装
     React.useEffect(() => {
       
-      const nodeUrl = 'marrons-xym-farm001.com:3000';
+      const nodeUrl = 'dhealth.shizuilab.com:3001';
       const repositoryFactory = new RepositoryFactoryHttp(nodeUrl, {
         websocketUrl: 'ws://' + nodeUrl + '/ws',
         websocketInjected: WebSocket
