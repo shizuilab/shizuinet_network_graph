@@ -25,7 +25,7 @@ import { indigo } from '@mui/material/colors';
 export class SymbolManager{
 
     // 形宣言
-    private _nodeUrl: string = 'https://ik1-432-48199.vs.sakura.ne.jp:3001';
+    private _nodeUrl: string = 'https://dhealth.shizuilab.com:3001';
     private _address: string = '';
     private _sym = require("../../node_modules/symbol-sdk");
 
