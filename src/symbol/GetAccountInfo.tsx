@@ -15,7 +15,7 @@ const GetAccountInfo = () => {
   const accountInfo = () => {
     const accountAddress = Address.createFromRawAddress(address)
     console.log("アカウントアドレス",accountAddress)
-    const nodeUrl = 'https://001-sai-dual.symboltest.net:3001'
+    const nodeUrl = 'https://dhealth.shizuilab.com:3001'
     console.log("ノードURL",nodeUrl)
     const repositoryFactory = new RepositoryFactoryHttp(nodeUrl)
     console.log("リポジトリファクトリ",repositoryFactory)
