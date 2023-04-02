@@ -32,7 +32,7 @@ export const useRecentTransactions = (targetAddress:string) => {
   const accountInfo = () => {
     const accountAddress = Address.createFromRawAddress(address);
     console.log("アカウントアドレス",accountAddress);
-    const nodeUrl = 'https://marrons-xym-farm001.com:3001';
+    const nodeUrl = 'https://dhealth.shizuilab.com:3001';
     console.log("ノードURL",nodeUrl);
     const repositoryFactory = new RepositoryFactoryHttp(nodeUrl);
     console.log("リポジトリファクトリ",repositoryFactory);
@@ -47,7 +47,7 @@ export const useRecentTransactions = (targetAddress:string) => {
 
   // 直近のトランザクション取得
   async function asyncFunc(){
-    const nodeUrl = 'https://marrons-xym-farm001.com:3001';
+    const nodeUrl = 'https://dhealth.shizuilab.com:3001';
     const repositoryFactory = new RepositoryFactoryHttp(nodeUrl);
     const txRepo = repositoryFactory.createTransactionRepository();
     const accountAddress = Address.createFromRawAddress(address);
